@@ -1,10 +1,10 @@
-package com.example.myanimelistapp
+package com.example.myanimelistappxml
 
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.example.myanimelistappxml.R
+import timber.log.Timber
 
 class DetailActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -18,6 +18,8 @@ class DetailActivity : AppCompatActivity() {
         val title = intent.getStringExtra("title")
         val desc = intent.getStringExtra("desc")
         val imageResId = intent.getIntExtra("imageResId", 0)
+
+        Timber.d("Berpindah ke Detail: $title")
 
         tvTitle.text = title
         tvDesc.text = desc

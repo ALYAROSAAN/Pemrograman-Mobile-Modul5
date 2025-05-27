@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import timber.log.Timber
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -13,8 +14,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -29,16 +33,21 @@ import com.example.myanimelistapp.ui.theme.MyAnimeListAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        Timber.plant(Timber.DebugTree())
         super.onCreate(savedInstanceState)
+        Timber.d("aplikasi dimulai")
         enableEdgeToEdge()
         setContent {
             MyAnimeListAppTheme {
                 val navController = rememberNavController()
                 NavHost(navController = navController, startDestination = "list") {
 
-                    // ✅ Rute detail menerima 3 argumen
+                    composable("list") {
+                        ItemList(navController = navController)
+                    }
+
                     composable(
-                        "detail/{title}/{detail}/{imageRes}",
+                        route = "detail/{title}/{detail}/{imageRes}",
                         arguments = listOf(
                             navArgument("title") { type = NavType.StringType },
                             navArgument("detail") { type = NavType.StringType },
@@ -47,18 +56,16 @@ class MainActivity : ComponentActivity() {
                     ) { backStackEntry ->
                         val title = backStackEntry.arguments?.getString("title") ?: ""
                         val detail = backStackEntry.arguments?.getString("detail") ?: ""
-                        val imageRes = backStackEntry.arguments?.getInt("imageRes") ?: R.drawable.naruto
-                        DetailScreen(title, detail, imageRes)
-                    }
+                        val imageRes = backStackEntry.arguments?.getInt("imageRes") ?: 0
 
-                    composable("list") {
-                        ItemList(navController)
+                        DetailScreen(title = title, detail = detail, imageRes = imageRes)
                     }
                 }
             }
         }
     }
 }
+
 
 // === Data class ===
 data class ListItem(
@@ -82,17 +89,23 @@ val sampleItems = listOf(
 @Composable
 fun ItemList(navController: NavHostController) {
     val context = LocalContext.current
+    val viewModel: AnimeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = AnimeViewModelFactory("ItemList")
+    )
+    val itemList by viewModel.animeList.collectAsState()
+
     LazyColumn(modifier = Modifier.padding(8.dp)) {
-        items(sampleItems) { item ->
+        items(itemList) { item ->
             Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFF0F0F0) // warna latar Card
+                ),
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier
                     .padding(8.dp)
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
             ) {
                 Row(modifier = Modifier.padding(16.dp)) {
-                    // Gambar di kiri (portrait)
                     Image(
                         painter = painterResource(id = item.imageRes),
                         contentDescription = null,
@@ -102,10 +115,7 @@ fun ItemList(navController: NavHostController) {
                             .height(250.dp)
                             .clip(RoundedCornerShape(12.dp))
                     )
-
                     Spacer(modifier = Modifier.width(16.dp))
-
-                    // Konten teks dan tombol di kanan
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -113,19 +123,20 @@ fun ItemList(navController: NavHostController) {
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(item.title, style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            item.subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            maxLines = Int.MAX_VALUE,
-                            overflow = TextOverflow.Visible
-                        )
+                        Text(item.subtitle, style = MaterialTheme.typography.bodySmall, maxLines = Int.MAX_VALUE,
+                            overflow = TextOverflow.Visible)
 
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(
                                 onClick = {
-                                    // ✅ Kirim imageRes ke halaman detail
+                                    viewModel.logItemClick(item, "Detail")
+                                    Timber.d("Navigasi ke detail: ${item.title}")
                                     navController.navigate("detail/${item.title}/${item.detail}/${item.imageRes}")
                                 },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF3A4C8B), // warna biru keunguan
+                                    contentColor = Color.White // teks putih
+                                ),
                                 modifier = Modifier.widthIn(min = 100.dp, max = 140.dp)
                             ) {
                                 Text("Detail", style = MaterialTheme.typography.labelLarge)
@@ -133,9 +144,15 @@ fun ItemList(navController: NavHostController) {
 
                             Button(
                                 onClick = {
+                                    viewModel.logItemClick(item, "Open URL")
+                                    Timber.d("Membuka URL: ${item.url}")
                                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(item.url))
                                     context.startActivity(intent)
                                 },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF3A4C8B), // warna biru keunguan
+                                    contentColor = Color.White // teks putih
+                                ),
                                 modifier = Modifier.widthIn(min = 100.dp, max = 140.dp)
                             ) {
                                 Text("Open URL", style = MaterialTheme.typography.labelLarge)
@@ -147,6 +164,7 @@ fun ItemList(navController: NavHostController) {
         }
     }
 }
+
 
 // === Detail Screen ===
 @Composable
