@@ -30,8 +30,6 @@ class MovieRepository(
             movieDao.deleteAllMovies()
             movieDao.insertMovies(moviesFromApi.map { it.toMovieEntity() })
 
-            // Flow dari DAO akan otomatis emit data terbaru, jadi kita tidak perlu emit lagi di sini.
-            // Jika tidak menggunakan flow dari DAO, kita bisa emit lagi data baru dari sini.
 
         } catch (e: Exception) {
             // 4. Jika network gagal, emit error. UI tetap punya data dari cache.
