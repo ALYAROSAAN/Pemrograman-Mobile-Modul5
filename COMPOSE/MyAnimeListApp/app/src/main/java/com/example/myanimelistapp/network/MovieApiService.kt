@@ -1,4 +1,3 @@
-// file: data/network/MovieApiService.kt
 package com.example.myanimelistapp.network
 
 import com.example.myanimelistapp.data.model.MovieResponse
