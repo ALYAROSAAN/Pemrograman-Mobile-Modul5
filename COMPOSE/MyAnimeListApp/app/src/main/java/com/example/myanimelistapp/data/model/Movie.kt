@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 data class Movie(
     val id: Int,
     val title: String,
-    @SerialName("poster_path") // Sesuaikan dengan nama field di JSON
+    @SerialName("poster_path") 
     val posterPath: String?,
     @SerialName("overview")
     val overview: String
