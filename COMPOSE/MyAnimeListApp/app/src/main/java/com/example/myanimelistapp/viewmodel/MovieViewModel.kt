@@ -1,6 +1,5 @@
 package com.example.myanimelistapp.viewmodel
 
-// file: viewmodel/MovieViewModel.kt
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myanimelistapp.data.model.Movie
